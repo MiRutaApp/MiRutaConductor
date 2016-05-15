@@ -52,7 +52,7 @@ public class LoginActivity extends AppCompatActivity{
                     @Override
                     public void done(ParseUser user, ParseException e) {
                         if (user != null) {
-                            Intent i = new Intent(getBaseContext(),MainActivity.class);
+                            Intent i = new Intent(getBaseContext(),MapsActivity.class);
                             startActivity(i);
                         } else {
                             Log.e(TAG, e.toString());
