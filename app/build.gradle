@@ -18,6 +18,16 @@ android {
         }
     }
 }
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.neenbedankt.gradle.plugins:android-apt:1.8'
+    }
+}
+
+apply plugin: 'com.neenbedankt.android-apt'
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
@@ -28,8 +38,8 @@ dependencies {
 
     //ButterKnife
     compile'com.jakewharton:butterknife:8.0.1'
+    apt 'com.jakewharton:butterknife-compiler:8.0.1'
 
     //Parse
-    compile'com.parse.bolts:bolts-android:1.+'
-    compile'com.parse:parse-android:1.+'
+    compile'com.parse:parse-android:1.13.0'
 }

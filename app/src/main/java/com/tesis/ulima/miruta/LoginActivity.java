@@ -37,8 +37,6 @@ public class LoginActivity extends AppCompatActivity{
         setContentView(R.layout.activity_login);
         ButterKnife.bind(this);
         Log.d(TAG, "onCreate");
-       // Button mEmailSingInButton = (Button)findViewById(R.id.email_sign_in_button);
-
         mEmailSingInButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
