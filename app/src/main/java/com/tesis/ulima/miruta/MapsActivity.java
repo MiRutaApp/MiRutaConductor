@@ -25,11 +25,8 @@ import com.parse.ParseGeoPoint;
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
-    private LocationRequest locationRequest;
     private LocationManager locationManager;
     private LocationListener locationListener;
-    private static final long MIN_TIME = 400;
-    private static final float MIN_DISTANCE = 1000;
     private ParseGeoPoint geolocation;
     private LatLng latLng;
 
@@ -62,7 +59,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onMapReady(GoogleMap googleMap) {
 
         mMap = googleMap;
+
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        //noinspection MissingPermission
+        Location location= locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+        latLng = new LatLng(location.getLatitude(), location.getLongitude());
+        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 15);
+        mMap.moveCamera(cameraUpdate);
 
         //noinspection MissingPermission
         locationListener = new LocationListener() {
@@ -70,10 +73,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             public void onLocationChanged(Location location) {
                 latLng = new LatLng(location.getLatitude(), location.getLongitude());
                 CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 15);
+                mMap.addMarker(new MarkerOptions().position(latLng).icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_cast_light)));
                 mMap.animateCamera(cameraUpdate);
-                mMap.addMarker(new MarkerOptions().position(latLng).icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_bus_24dp)));
-                //noinspection MissingPermission
-                locationManager.removeUpdates(locationListener);
             }
 
             @Override
@@ -92,7 +93,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         };
         //noinspection MissingPermission
-        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, MIN_TIME, MIN_DISTANCE, locationListener);
+        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
 
 
 
