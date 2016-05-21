@@ -3,6 +3,7 @@ package com.tesis.ulima.miruta;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -22,16 +23,28 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.PolylineOptions;
+import com.parse.FindCallback;
+import com.parse.GetCallback;
+import com.parse.ParseException;
 import com.parse.ParseGeoPoint;
+import com.parse.ParseObject;
+import com.parse.ParseQuery;
+import com.parse.ParseUser;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
+    private static final String TAG = "MapsActivity";
     private GoogleMap mMap;
     private LocationManager locationManager;
     private LocationListener locationListener;
     private ParseGeoPoint geolocation;
     private LatLng latLng;
     private Marker marker;
+    List<ParseGeoPoint> points = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,7 +57,62 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         //noinspection MissingPermission
         //You can also use LocationManager.GPS_PROVIDER and LocationManager.PASSIVE_PROVIDER
+        ParseQuery<ParseObject> unidadQuery = ParseQuery.getQuery("Unidad");
+        unidadQuery.whereEqualTo("chofer", ParseUser.getCurrentUser());
+        unidadQuery.findInBackground(new FindCallback<ParseObject>() {
+            @Override
+            public void done(List<ParseObject> objects, ParseException e) {
+                Log.d(TAG, "doneUnidad");
+                if(e==null){
+                    ParseQuery<ParseObject> rutaQuery = ParseQuery.getQuery("Ruta");
+                    //Un chofer puede estar asignado a varias unidades?
+                    rutaQuery.getInBackground(objects.get(0).getParseObject("ruta").getObjectId(), new GetCallback<ParseObject>() {
+                        @Override
+                        public void done(final ParseObject object, ParseException e) {
+                            if(e==null){
+                                ParseQuery<ParseObject> rutasQuery = ParseQuery.getQuery("Ruta");
+                                rutasQuery.whereEqualTo("nombre", object.get("nombre"));
+                                rutasQuery.findInBackground(new FindCallback<ParseObject>() {
+                                    @Override
+                                    public void done(List<ParseObject> objects, ParseException e) {
+                                        if(e==null){
+                                            points= (ArrayList<ParseGeoPoint>)objects.get(0).get("camino");
+                                            populateMap(points);
+                                        }else {
+                                            Log.e(TAG,e.toString());
+                                        }
 
+                                    }
+                                });
+
+                            }else {
+                                Log.e(TAG, e.toString());
+                            }
+                        }
+                    });
+                }else {
+                    Log.e(TAG,e.toString());
+                }
+            }
+        });
+
+
+    }
+
+    private void populateMap(List<ParseGeoPoint> points) {
+        PolylineOptions polylineOptions = new PolylineOptions().geodesic(true);
+
+        for(ParseGeoPoint parseGeoPoint : points){
+            MarkerOptions markerOptions = new MarkerOptions();
+            LatLng latLng;
+            latLng = new LatLng(parseGeoPoint.getLatitude(),parseGeoPoint.getLongitude());
+            markerOptions.position(latLng);
+            markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_directions_bus_black_24dp));
+            polylineOptions.color(ContextCompat.getColor(this,R.color.polyline));
+            polylineOptions.add(latLng);
+            mMap.addMarker(markerOptions);
+        }
+        mMap.addPolyline(polylineOptions);
 
     }
 
@@ -63,7 +131,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         mMap = googleMap;
         //noinspection MissingPermission
-        mMap.setMyLocationEnabled(true);
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         //noinspection MissingPermission
         Location location= locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
@@ -82,7 +149,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     marker.remove();
                 }
                 marker = mMap.addMarker(new MarkerOptions().position(latLng).icon(BitmapDescriptorFactory.fromResource(R.drawable.orange)));
-                mMap.animateCamera(cameraUpdate);
+                //mMap.animateCamera(cameraUpdate);
             }
 
             @Override
@@ -103,7 +170,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         //noinspection MissingPermission
         locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
 
+    }
 
-
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        ParseUser.logOut();
     }
 }

@@ -42,4 +42,5 @@ dependencies {
 
     //Parse
     compile'com.parse:parse-android:1.13.0'
+
 }
