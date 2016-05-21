@@ -9,6 +9,7 @@ import android.location.LocationManager;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
 import com.google.android.gms.location.LocationRequest;
@@ -19,6 +20,7 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.parse.ParseGeoPoint;
 
@@ -29,6 +31,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private LocationListener locationListener;
     private ParseGeoPoint geolocation;
     private LatLng latLng;
+    private Marker marker;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,7 +62,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onMapReady(GoogleMap googleMap) {
 
         mMap = googleMap;
-
+        //noinspection MissingPermission
+        mMap.setMyLocationEnabled(true);
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         //noinspection MissingPermission
         Location location= locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
@@ -67,13 +71,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 15);
         mMap.moveCamera(cameraUpdate);
 
+
         //noinspection MissingPermission
         locationListener = new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
                 latLng = new LatLng(location.getLatitude(), location.getLongitude());
                 CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 15);
-                mMap.addMarker(new MarkerOptions().position(latLng).icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_cast_light)));
+                if (marker!=null){
+                    marker.remove();
+                }
+                marker = mMap.addMarker(new MarkerOptions().position(latLng).icon(BitmapDescriptorFactory.fromResource(R.drawable.orange)));
                 mMap.animateCamera(cameraUpdate);
             }
 
