@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">MiRuta</string>
+    <string name="app_name">MiRutaConductor</string>
 
     <!-- Strings related to login -->
     <string name="prompt_email">Usuario</string>

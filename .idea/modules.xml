@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/MiRuta.iml" filepath="$PROJECT_DIR$/MiRuta.iml" />
+      <module fileurl="file://$PROJECT_DIR$/MiRutaConductor.iml" filepath="$PROJECT_DIR$/MiRutaConductor.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
     </modules>
   </component>
