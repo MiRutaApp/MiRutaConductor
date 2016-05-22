@@ -1,18 +1,25 @@
 package com.tesis.ulima.miruta;
 
 import android.content.Context;
+import android.graphics.Point;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.Handler;
+import android.os.SystemClock;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
+import android.view.animation.Interpolator;
+import android.view.animation.LinearInterpolator;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.Projection;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
@@ -50,7 +57,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
-        //noinspection MissingPermission
+        //noinspection MissingPermission -12.086340,-76.990059
         //You can also use LocationManager.GPS_PROVIDER and LocationManager.PASSIVE_PROVIDER
         ParseQuery<ParseObject> unidadQuery = ParseQuery.getQuery("Unidad");
         unidadQuery.whereEqualTo("chofer", ParseUser.getCurrentUser());
@@ -59,6 +66,27 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             public void done(List<ParseObject> objects, ParseException e) {
                 Log.d(TAG, "doneUnidad");
                 if(e==null){
+                    ParseQuery<ParseObject> unidadQuery2= ParseQuery.getQuery("Unidad");
+                    unidadQuery2.whereEqualTo("ruta",objects.get(0).getParseObject("ruta"));
+                    unidadQuery2.whereNotEqualTo("chofer",ParseUser.getCurrentUser());
+                    unidadQuery2.findInBackground(new FindCallback<ParseObject>() {
+                        @Override
+                        public void done(List<ParseObject> objects, ParseException e) {
+                            if(e==null){
+                                for(ParseObject parseObject : objects) {
+                                    MarkerOptions markerOptions = new MarkerOptions();
+                                    LatLng latLng;
+                                    latLng = new LatLng(((ParseGeoPoint) parseObject.get("posicion")).getLatitude()
+                                            , ((ParseGeoPoint) parseObject.get("posicion")).getLongitude());
+                                    markerOptions.position(latLng);
+                                    markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.green));
+                                    mMap.addMarker(markerOptions);
+                                }
+                            }else {
+                                Log.e(TAG,e.toString());
+                            }
+                        }
+                    });
                     ParseQuery<ParseObject> rutaQuery = ParseQuery.getQuery("Ruta");
                     //Un chofer puede estar asignado a varias unidades?
                     rutaQuery.getInBackground(objects.get(0).getParseObject("ruta").getObjectId(), new GetCallback<ParseObject>() {
@@ -144,7 +172,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     marker.remove();
                 }
                 marker = mMap.addMarker(new MarkerOptions().position(latLng).icon(BitmapDescriptorFactory.fromResource(R.drawable.orange)));
+                animateMarker(marker,latLng,false);
                 //mMap.animateCamera(cameraUpdate);
+                Toast.makeText(MapsActivity.this, "Changed", Toast.LENGTH_SHORT).show();
             }
 
             @Override
@@ -165,6 +195,43 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         //noinspection MissingPermission
         locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
 
+    }
+
+    public void animateMarker(final Marker marker, final LatLng toPosition,
+                              final boolean hideMarker) {
+        final Handler handler = new Handler();
+        final long start = SystemClock.uptimeMillis();
+        Projection proj = mMap.getProjection();
+        Point startPoint = proj.toScreenLocation(marker.getPosition());
+        final LatLng startLatLng = proj.fromScreenLocation(startPoint);
+        final long duration = 500;
+
+        final Interpolator interpolator = new LinearInterpolator();
+
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                long elapsed = SystemClock.uptimeMillis() - start;
+                float t = interpolator.getInterpolation((float) elapsed
+                        / duration);
+                double lng = t * toPosition.longitude + (1 - t)
+                        * startLatLng.longitude;
+                double lat = t * toPosition.latitude + (1 - t)
+                        * startLatLng.latitude;
+                marker.setPosition(new LatLng(lat, lng));
+
+                if (t < 1.0) {
+                    // Post again 16ms later.
+                    handler.postDelayed(this, 16);
+                } else {
+                    if (hideMarker) {
+                        marker.setVisible(false);
+                    } else {
+                        marker.setVisible(true);
+                    }
+                }
+            }
+        });
     }
 
     @Override
