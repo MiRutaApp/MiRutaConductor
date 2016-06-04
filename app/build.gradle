@@ -42,4 +42,8 @@ dependencies {
     //Parse
     compile'com.parse:parse-android:1.13.0'
 
+    //MapsUtils
+    compile 'com.google.maps.android:android-maps-utils:0.4+'
+
+    compile project(path: ':volley')
 }
