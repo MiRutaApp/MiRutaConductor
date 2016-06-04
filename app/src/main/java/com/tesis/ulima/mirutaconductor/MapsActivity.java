@@ -59,7 +59,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private ParseGeoPoint geolocation;
     private LatLng latLng;
     private Marker marker;
-    List<ParseGeoPoint> points = new ArrayList<>();
 
     BusesPositionContract.UserActionListener mActionListener;
 
@@ -100,9 +99,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                     @Override
                                     public void done(List<ParseObject> objects, ParseException e) {
                                         if (e == null) {
-                                            points = (ArrayList<ParseGeoPoint>) objects.get(0).get("camino");
-                                            fetchSnapRoad(points);
-                                            //populateMap(points);
+                                            fetchSnapRoad((ArrayList<ParseGeoPoint>) objects.get(0).get("camino"));
                                         } else {
                                             Log.e(TAG, e.toString());
                                         }
@@ -124,54 +121,54 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     }
 
-    private void populateMap(List<LatLng> points) {
-        Log.d("populateMap","making before call");
+    private void populateMap(String encodedLine, List<ParseGeoPoint> points) {
+        Log.d("populateMap", "making before call");
 
         PolylineOptions polylineOptions = new PolylineOptions().geodesic(true);
+        polylineOptions.color(ContextCompat.getColor(this, R.color.polyline)).width(15);
 
-        for (LatLng latLng: points) {
+        for (ParseGeoPoint parseGeoPoint : points) {
+            LatLng latLng = new LatLng(parseGeoPoint.getLatitude(), parseGeoPoint.getLongitude());
             MarkerOptions markerOptions = new MarkerOptions();
             markerOptions.position(latLng);
             markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.busstop));
-            polylineOptions.color(ContextCompat.getColor(this, R.color.polyline)).width(15);
-            polylineOptions.add(latLng);
             mMap.addMarker(markerOptions);
         }
+        List<LatLng> list = PolyUtil.decode(encodedLine);
+        polylineOptions.addAll(list);
         mMap.addPolyline(polylineOptions);
 
     }
-    public void fetchSnapRoad(List<ParseGeoPoint> points){
-        Log.d("fetchSnapRoad","Making the call");
+
+    public void fetchSnapRoad(final List<ParseGeoPoint> points) {
+        Log.d("fetchSnapRoad", "Making the call");
         RequestQueue requestQueue = Volley.newRequestQueue(this);
-        String url = "https://roads.googleapis.com/v1/snapToRoads?path=" +
-                points.get(0).getLatitude()+","+points.get(0).getLongitude()+"|"+
-                points.get(1).getLatitude()+","+points.get(1).getLongitude()+"|"+
-                points.get(2).getLatitude()+","+points.get(2).getLongitude()+"|"+
-                points.get(3).getLatitude()+","+points.get(3).getLongitude()+"|"+
-                points.get(4).getLatitude()+","+points.get(4).getLongitude()+"|"+
-                points.get(5).getLatitude()+","+points.get(5).getLongitude()+"|"+
-                points.get(6).getLatitude()+","+points.get(6).getLongitude()+"|"+
-                points.get(7).getLatitude()+","+points.get(7).getLongitude()+
-                "&interpolate=true&key="+ "AIzaSyAyS7fcTfZEdP24kLe4vrvtRpXkl-dHkDI";
+        String puntos = "";
+        for(int i = 0; i<points.size();i++){
+            if(i==0){
+                puntos =puntos.concat("origin=" + points.get(0).getLatitude() + "," + points.get(0).getLongitude()+ "&waypoints=");
+            }else if(i==points.size()-1){
+                puntos =puntos.concat("&destination=" +
+                        points.get(i).getLatitude() + "," + points.get(i).getLongitude());
+            }else if(i==points.size()-2){
+                puntos =puntos.concat(points.get(i).getLatitude() + "," + points.get(i).getLongitude());
+            }else puntos =puntos.concat(points.get(i).getLatitude() + "," + points.get(i).getLongitude() + "|");
+        }
+        Log.d("puntos",puntos);
+        String url = "http://maps.googleapis.com/maps/api/directions/json?"
+                + puntos +
+                "&sensor=false&units=metric";
         JsonObjectRequest jsObjRequest = new JsonObjectRequest
                 (Request.Method.GET, url, null, new com.android.volley.Response.Listener<JSONObject>() {
 
                     @Override
                     public void onResponse(JSONObject response) {
                         try {
-                            Utils.list=new ArrayList<>();
-                            Log.d("volley call",response.getJSONArray("snappedPoints").getJSONObject(0).getJSONObject("location").get("latitude").toString());
-                            for(int i=0; i<response.getJSONArray("snappedPoints").length();i++){
-                                JSONObject jsonObject= response.getJSONArray("snappedPoints").getJSONObject(i);
-                                Utils.list.add(new LatLng(jsonObject.getJSONObject("location").getDouble("latitude"),jsonObject.getJSONObject("location").getDouble("longitude")));
-
-                            }
-                            populateMap(Utils.list);
-
+                            String encodedLine = response.getJSONArray("routes").getJSONObject(0).getJSONObject("overview_polyline").getString("points");
+                            populateMap(encodedLine, points);
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
-
                     }
                 }, new com.android.volley.Response.ErrorListener() {
 
@@ -302,7 +299,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             mMap.addMarker(markerOptions);
         }
     }
-
 
 
     @Override
