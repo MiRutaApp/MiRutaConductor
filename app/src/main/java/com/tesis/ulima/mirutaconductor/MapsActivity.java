@@ -282,6 +282,24 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     @Override
+    protected void onPause() {
+        super.onPause();
+        if(locationManager !=null){
+            //noinspection MissingPermission
+            locationManager.removeUpdates(locationListener);
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if(locationManager !=null){
+            //noinspection MissingPermission
+            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
+        }
+    }
+
+    @Override
     public void onBackPressed() {
         super.onBackPressed();
         ParseUser.logOut();
