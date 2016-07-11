@@ -198,29 +198,28 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         //noinspection MissingPermission
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        Criteria criteria = new Criteria();
         //noinspection MissingPermission
         mMap.setMyLocationEnabled(true);
         //noinspection MissingPermission
 
-        Location location = locationManager.getLastKnownLocation(locationManager.getBestProvider(criteria, false));
+        Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
         latLng = new LatLng(location.getLatitude(), location.getLongitude());
+        Log.d(TAG, "getLastKnownLocation " + location.getLatitude() + " " + location.getLongitude());
         CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 17);
         mMap.moveCamera(cameraUpdate);
 
-
-        //noinspection MissingPermission
+        /*//noinspection MissingPermission
         locationListener = new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
-                /*latLng = new LatLng(location.getLatitude(), location.getLongitude());
+                latLng = new LatLng(location.getLatitude(), location.getLongitude());
                 CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 15);
-                if (marker!=null){
+                *//*if (marker!=null){
                     marker.remove();
                 }
                 marker = mMap.addMarker(new MarkerOptions().position(latLng).icon(BitmapDescriptorFactory.fromResource(R.drawable.self)));
-                animateMarker(marker,latLng,false);
-                mMap.animateCamera(cameraUpdate);*/
+                animateMarker(marker,latLng,false);*//*
+                mMap.moveCamera(cameraUpdate);
                 Toast.makeText(MapsActivity.this, "Changed", Toast.LENGTH_SHORT).show();
             }
 
@@ -240,7 +239,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         };
         //noinspection MissingPermission
-        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
+        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);*/
 
     }
 
@@ -284,19 +283,19 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     protected void onPause() {
         super.onPause();
-        if(locationManager !=null){
+        /*if(locationManager !=null){
             //noinspection MissingPermission
             locationManager.removeUpdates(locationListener);
-        }
+        }*/
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        if(locationManager !=null){
+        /*if(locationManager !=null){
             //noinspection MissingPermission
             locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
-        }
+        }*/
     }
 
     @Override
